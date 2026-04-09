@@ -253,21 +253,34 @@ tr:last-child td{border-bottom:none;}
 <!-- LOAN MODAL -->
 <div class="overlay" id="mLoan"><div class="modal wide">
   <div class="mh"><h3>📖 도서 대여</h3><button class="mc" onclick="closeLoanModal()">✕</button></div>
-  <div class="fg"><label>학생 선택</label><select id="ln-student"></select></div>
+  <div class="fg-row">
+    <div class="fg"><label>학생 선택</label><select id="ln-student"></select></div>
+    <div class="fg"><label>대여일</label><input type="date" id="ln-date" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;width:100%;"></div>
+  </div>
   <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
-  <div style="display:flex;gap:8px;margin-bottom:8px;">
-    <input id="ln-isbn" placeholder="ISBN 13자리" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;">
-    <button class="btn btn-secondary" onclick="searchByISBN()">검색</button>
-    <button class="btn btn-primary" onclick="openScanner()">📷 스캔</button>
+  <div class="tabs" style="margin-bottom:12px;">
+    <div class="tab active" id="lt-scan" onclick="switchLoanTab('scan')">📷 바코드 / ISBN</div>
+    <div class="tab" id="lt-manual" onclick="switchLoanTab('manual')">✏️ 직접 입력</div>
   </div>
-  <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px;">또는 제목 검색</div>
-  <div style="display:flex;gap:8px;margin-bottom:10px;">
-    <input id="ln-title" placeholder="책 제목 입력" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;">
-    <button class="btn btn-secondary" onclick="searchByTitle()">검색</button>
+  <!-- 스캔/ISBN 탭 -->
+  <div id="loanTabScan">
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input id="ln-isbn" placeholder="ISBN 13자리 입력 또는 바코드 스캔" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;">
+      <button class="btn btn-secondary" onclick="searchByISBN()">검색</button>
+      <button class="btn btn-primary" onclick="openScanner()">📷 스캔</button>
+    </div>
+    <div id="scanWrap" style="display:none;margin-bottom:10px;"><div id="qr-reader"></div><button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="stopScanner()">■ 스캔 중지</button></div>
   </div>
-  <div id="scanWrap" style="display:none;margin-bottom:10px;"><div id="qr-reader"></div><button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="stopScanner()">■ 스캔 중지</button></div>
-  <div id="ln-results" style="display:none;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;"></div>
-  <div id="ln-selected" style="display:none;background:var(--bg);border-radius:8px;padding:12px;margin-bottom:10px;"><div class="book-preview" id="ln-bookInfo"></div></div>
+  <!-- 직접 입력 탭 -->
+  <div id="loanTabManual" style="display:none;">
+    <div class="fg"><label>도서명 *</label><input id="mn-title" placeholder="책 제목 입력"></div>
+    <div class="fg-row">
+      <div class="fg"><label>저자</label><input id="mn-author" placeholder="저자명"></div>
+      <div class="fg"><label>ISBN (선택)</label><input id="mn-isbn" placeholder="ISBN"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="confirmManual()">이 도서로 선택</button>
+  </div>
+  <div id="ln-selected" style="display:none;background:var(--bg);border-radius:8px;padding:12px;margin:10px 0;"><div class="book-preview" id="ln-bookInfo"></div></div>
   <div class="mf"><button class="btn btn-secondary" onclick="closeLoanModal()">취소</button><button class="btn btn-primary" id="ln-confirm" onclick="confirmLoan()" disabled>대여 확정</button></div>
 </div></div>
 
@@ -1033,8 +1046,9 @@ async function deleteClass(cid){
 let _selBook=null,_qr=null,_searchResults=[];
 function openLoanModal(defClass=null,defStudent=null){
   _selBook=null;_searchResults=[];
-  $('ln-selected').style.display='none';$('ln-results').style.display='none';
-  $('ln-isbn').value='';$('ln-title').value='';$('ln-confirm').disabled=true;$('scanWrap').style.display='none';
+  $('ln-selected').style.display='none';
+  $('ln-date').value=today();
+  $('ln-isbn').value='';$('ln-confirm').disabled=true;$('scanWrap').style.display='none';
   let students;
   if(defClass) students=Object.entries(S.students).filter(([,s])=>s.classId===defClass);
   else if(S.uinfo.role==='teacher') students=Object.entries(S.students).filter(([,s])=>s.classId===S.uinfo.classId);
@@ -1058,28 +1072,32 @@ async function searchByISBN(){
     if(d.items?.length>0)selectBook(d.items[0]);else toast('도서를 찾을 수 없습니다','err');
   }catch(e){toast('검색 실패: '+e.message,'err');}
 }
-async function searchByTitle(){
-  const t=$('ln-title').value.trim();if(!t){toast('제목을 입력해주세요','err');return;}
-  toast('검색 중...');
-  try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(t)}&maxResults=8`);const d=await r.json();
-    const el=$('ln-results');
-    if(!d.items?.length){el.innerHTML='<p style="padding:12px;text-align:center;color:var(--muted);">결과 없음</p>';el.style.display='block';return;}
-    _searchResults=d.items;
-    el.innerHTML=d.items.map((item,i)=>{const info=item.volumeInfo,thumb=info.imageLinks?.thumbnail||'';
-      return `<div style="display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;align-items:center;" onclick="selectBook(${i})">
-        ${thumb?`<img src="${thumb}" style="width:34px;height:46px;object-fit:cover;border-radius:3px;flex-shrink:0;">`:
-          '<div style="width:34px;height:46px;background:var(--bg);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">📚</div>'}
-        <div><div style="font-weight:600;font-size:13px;">${info.title}</div>
-        <div style="font-size:11px;color:var(--muted);">${(info.authors||[]).join(', ')}</div></div></div>`;}).join('');
-    el.style.display='block';
-  }catch(e){toast('검색 실패: '+e.message,'err');}
+function switchLoanTab(tab){
+  $('loanTabScan').style.display=tab==='scan'?'':'none';
+  $('loanTabManual').style.display=tab==='manual'?'':'none';
+  document.querySelectorAll('#mLoan .tab').forEach(t=>t.classList.remove('active'));
+  $('lt-'+tab).classList.add('active');
+  if(tab==='manual'){$('mn-title').value='';$('mn-author').value='';$('mn-isbn').value='';}
+  _selBook=null;$('ln-selected').style.display='none';$('ln-confirm').disabled=true;
+}
+
+function confirmManual(){
+  const title=$('mn-title').value.trim();
+  if(!title){toast('도서명은 필수입니다','err');return;}
+  _selBook={isbn:$('mn-isbn').value.trim()||'manual-'+Date.now(),title,authors:$('mn-author').value.trim(),thumbnail:''};
+  $('ln-bookInfo').innerHTML=`<div class="bp-thumb-ph">📚</div>
+    <div><div style="font-weight:700;font-size:15px;">${title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px;">${$('mn-author').value.trim()||'저자 미입력'}</div></div>`;
+  $('ln-selected').style.display='block';
+  $('ln-confirm').disabled=false;
+  toast('도서 선택됨','ok');
 }
 function selectBook(itemOrIdx){
   const item=typeof itemOrIdx==='number'?_searchResults[itemOrIdx]:itemOrIdx;if(!item)return;
   const info=item.volumeInfo;
   const isbn=info.industryIdentifiers?.find(i=>i.type.includes('ISBN'))?.identifier||item.id;
   _selBook={isbn,title:info.title,authors:(info.authors||[]).join(', '),thumbnail:info.imageLinks?.thumbnail||''};
-  $('ln-results').style.display='none';
+  
   $('ln-bookInfo').innerHTML=`${_selBook.thumbnail?`<img src="${_selBook.thumbnail}" class="bp-thumb">`:'<div class="bp-thumb-ph">📚</div>'}
     <div><div style="font-weight:700;font-size:15px;">${_selBook.title}</div>
     <div style="font-size:12px;color:var(--muted);margin-top:3px;">${_selBook.authors}</div>
@@ -1103,7 +1121,7 @@ async function confirmLoan(){
   if(al>=S.settings.maxBooks){toast(`최대 ${S.settings.maxBooks}권까지 대여 가능합니다`,'err');return;}
   const td=today();
   await _db.ref('/loans').push({studentId:sid,classId:s.classId,isbn:_selBook.isbn,bookTitle:_selBook.title,
-    authors:_selBook.authors,thumbnail:_selBook.thumbnail,loanDate:td,dueDate:addDays(td,S.settings.loanDays),returnDate:null,arQuizDone:false});
+    authors:_selBook.authors,thumbnail:_selBook.thumbnail,loanDate:$("ln-date").value||td,dueDate:addDays($("ln-date").value||td,S.settings.loanDays),returnDate:null,arQuizDone:false});
   toast(`📖 「${_selBook.title}」 대여 완료 (반납기한: ${addDays(td,S.settings.loanDays)})`,'ok');
   closeLoanModal();
 }

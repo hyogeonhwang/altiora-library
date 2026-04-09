@@ -832,63 +832,70 @@ function vTeacherDash(){
   const cid=S.uinfo.classId;
   const cls=S.classes[cid]||{};
   const allLoans=Object.entries(S.loans).filter(([,l])=>l.classId===cid&&!l.returnDate);
-  const overdue=allLoans.filter(([,l])=>loanStatus(l)==='overdue');
-  const near=allLoans.filter(([,l])=>loanStatus(l)==='near');
-  const arPending=allLoans.filter(([,l])=>!l.arQuizDone);
 
-  const makeMsg=(studentName,bookTitle,days,isOverdue)=>{
-    if(isOverdue) return `안녕하세요, ${cls.name} ${studentName} 학부모님.\n도서 「${bookTitle}」의 반납 기한이 ${days}일 지났습니다.\n빠른 반납 부탁드립니다. 감사합니다.`;
-    return `안녕하세요, ${cls.name} ${studentName} 학부모님.\n도서 「${bookTitle}」의 반납 기한이 ${days}일 남았습니다.\n반납 준비 부탁드립니다. 감사합니다.`;
-  };
+  // 학생별로 묶기
+  const byStudent={};
+  allLoans.forEach(([lid,l])=>{
+    if(!byStudent[l.studentId]) byStudent[l.studentId]={loans:[]};
+    byStudent[l.studentId].loans.push({lid,...l});
+  });
 
-  const overdueRows=overdue.map(([lid,l])=>{
-    const st=S.students[l.studentId]||{};
-    const days=Math.abs(daysDiff(today(),l.dueDate));
-    const msg=makeMsg(st.name,l.bookTitle||l.isbn,days,true);
-    return `<tr>
-      <td><strong class="tr-link" onclick="goStudent('${l.studentId}')" style="color:var(--primary);cursor:pointer;">${st.name||'-'}</strong></td>
-      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.bookTitle||l.isbn}</td>
-      <td>${l.loanDate}</td>
-      <td>${l.dueDate}</td>
-      <td><span class="badge b-red">+${days}일</span></td>
-      <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"></label></td>
-      <td style="display:flex;gap:4px;">
-        <button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button>
-        <button class="btn btn-secondary btn-sm" onclick="copyMsg(\`${msg.replace(/`/g,"'")}\`)" title="알림 문자 복사">📋</button>
+  // 학생별 집계
+  const studentRows=Object.entries(byStudent).map(([sid,d])=>{
+    const st=S.students[sid]||{};
+    const loans=d.loans;
+    const count=loans.length;
+    const latestLoan=loans.map(l=>l.loanDate).sort().pop();
+    const earliestDue=loans.map(l=>l.dueDate).sort()[0];
+    const arDone=loans.filter(l=>l.arQuizDone).length;
+    // 가장 심각한 상태
+    const hasOverdue=loans.some(l=>loanStatus(l)==='overdue');
+    const hasNear=loans.some(l=>loanStatus(l)==='near');
+    const overdueMax=hasOverdue?Math.max(...loans.filter(l=>loanStatus(l)==='overdue').map(l=>Math.abs(daysDiff(today(),l.dueDate)))):0;
+    const nearMin=hasNear?Math.min(...loans.filter(l=>loanStatus(l)==='near').map(l=>daysDiff(today(),l.dueDate))):0;
+
+    let statusBadge='<span class="badge b-blue">대여중</span>';
+    if(hasOverdue) statusBadge=`<span class="badge b-red">+${overdueMax}일 초과</span>`;
+    else if(hasNear) statusBadge=`<span class="badge b-orange">${nearMin}일 남음</span>`;
+
+    // 문자 메시지 생성
+    let msg='';
+    if(hasOverdue){
+      const ol=loans.filter(l=>loanStatus(l)==='overdue');
+      const bookList=ol.map(l=>l.bookTitle||l.isbn).join(', ');
+      msg=`안녕하세요, ${cls.name} ${st.name} 학부모님.\n도서 「${bookList}」의 반납 기한이 지났습니다.\n빠른 반납 부탁드립니다. 감사합니다.`;
+    } else if(hasNear){
+      const nl=loans.filter(l=>loanStatus(l)==='near');
+      const bookList=nl.map(l=>l.bookTitle||l.isbn).join(', ');
+      msg=`안녕하세요, ${cls.name} ${st.name} 학부모님.\n도서 「${bookList}」의 반납 기한이 ${nearMin}일 남았습니다.\n반납 준비 부탁드립니다. 감사합니다.`;
+    }
+
+    return {sid,st,count,latestLoan,earliestDue,arDone,hasOverdue,hasNear,statusBadge,msg,loans};
+  }).sort((a,b)=>{
+    if(a.hasOverdue&&!b.hasOverdue) return -1;
+    if(!a.hasOverdue&&b.hasOverdue) return 1;
+    if(a.hasNear&&!b.hasNear) return -1;
+    if(!a.hasNear&&b.hasNear) return 1;
+    return (a.st.name||'').localeCompare(b.st.name||'');
+  });
+
+  const overdueCount=studentRows.filter(r=>r.hasOverdue).length;
+  const nearCount=studentRows.filter(r=>r.hasNear&&!r.hasOverdue).length;
+  const arPendingCount=allLoans.filter(([,l])=>!l.arQuizDone).length;
+
+  const tableRows=studentRows.map(r=>`
+    <tr>
+      <td><strong class="tr-link" onclick="goStudent('${r.sid}')" style="color:var(--primary);cursor:pointer;">${r.st.name||'-'}</strong></td>
+      <td><span class="badge b-blue">${r.count}권</span></td>
+      <td>${r.latestLoan}</td>
+      <td>${r.earliestDue}</td>
+      <td>${r.statusBadge}</td>
+      <td style="font-size:12px;">${r.arDone}/${r.count}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="goStudent('${r.sid}')">상세</button>
+        ${r.msg?`<button class="btn btn-secondary btn-sm" onclick="copyMsg('${r.msg.replace(/'/g,'&apos;')}')">📋</button>`:''}
       </td>
-    </tr>`;}).join('');
-
-  const nearRows=near.map(([lid,l])=>{
-    const st=S.students[l.studentId]||{};
-    const days=daysDiff(today(),l.dueDate);
-    const msg=makeMsg(st.name,l.bookTitle||l.isbn,days,false);
-    return `<tr>
-      <td><strong class="tr-link" onclick="goStudent('${l.studentId}')" style="color:var(--primary);cursor:pointer;">${st.name||'-'}</strong></td>
-      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.bookTitle||l.isbn}</td>
-      <td>${l.loanDate}</td>
-      <td>${l.dueDate}</td>
-      <td><span class="badge b-orange">${days}일 남음</span></td>
-      <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"></label></td>
-      <td style="display:flex;gap:4px;">
-        <button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button>
-        <button class="btn btn-secondary btn-sm" onclick="copyMsg(\`${msg.replace(/`/g,"'")}\`)" title="알림 문자 복사">📋</button>
-      </td>
-    </tr>`;}).join('');
-
-  const arRows=arPending.map(([lid,l])=>{
-    const st=S.students[l.studentId]||{};
-    const arMsg=`안녕하세요, ${cls.name} ${st.name} 학부모님.\n도서 「${l.bookTitle||l.isbn}」의 AR 퀴즈가 아직 완료되지 않았습니다.\n퀴즈 완료 후 선생님께 알려주시면 감사하겠습니다.`;
-    return `<tr>
-      <td><strong>${st.name||'-'}</strong></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.bookTitle||l.isbn}</td>
-      <td>${l.dueDate}</td>
-      <td><button class="btn btn-secondary btn-sm" onclick="copyMsg(\`${arMsg.replace(/`/g,"'")}\`)" title="AR 퀴즈 안내 복사">📋 문자 복사</button></td>
-      <td><label class="cb"><input type="checkbox" onchange="toggleAR('${lid}',this.checked)"> 완료 처리</label></td>
-    </tr>`;}).join('');
-
-  const loanTable=`<div class="tbl-wrap"><table>
-    <thead><tr><th>학생</th><th>도서명</th><th>대여일</th><th>반납기한</th><th>상태</th><th>AR</th><th></th></tr></thead>
-    <tbody>`;
+    </tr>`).join('');
 
   put(`
   <div class="ph">
@@ -896,39 +903,28 @@ function vTeacherDash(){
     <button class="btn btn-primary" onclick="openLoanModal('${cid}')">📖 도서 대여</button>
   </div>
   <div class="stats" style="margin-bottom:20px;">
-    <div class="stat"><div class="stat-val">${allLoans.length}</div><div class="stat-lbl">대여 중</div></div>
-    <div class="stat red"><div class="stat-val">${overdue.length}</div><div class="stat-lbl">기한 초과</div></div>
-    <div class="stat orange"><div class="stat-val">${near.length}</div><div class="stat-lbl">반납 임박</div></div>
-    <div class="stat"><div class="stat-val">${arPending.length}</div><div class="stat-lbl">AR 퀴즈 미완료</div></div>
+    <div class="stat"><div class="stat-val">${Object.keys(byStudent).length}</div><div class="stat-lbl">대여 중 학생</div></div>
+    <div class="stat"><div class="stat-val">${allLoans.length}</div><div class="stat-lbl">대여 중 권수</div></div>
+    <div class="stat red"><div class="stat-val">${overdueCount}</div><div class="stat-lbl">기한 초과</div></div>
+    <div class="stat orange"><div class="stat-val">${nearCount}</div><div class="stat-lbl">반납 임박</div></div>
   </div>
 
-  ${overdue.length>0?`
-  <div class="card mb16">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-size:14px;font-weight:700;color:var(--red);">🔴 기한 초과 (${overdue.length}명)</h3>
-      <span style="font-size:11px;color:var(--muted);">📋 클릭 시 알림 문자 복사</span>
+  ${studentRows.length===0?`<div class="card" style="text-align:center;padding:32px;"><span style="font-size:32px;">📚</span><p style="margin-top:10px;color:var(--muted);">현재 대여 중인 학생이 없습니다</p></div>`:`
+  <div class="card" style="padding:0;">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:14px;font-weight:700;">대여 현황 (${studentRows.length}명)</h3>
+      <span style="font-size:11px;color:var(--muted);">📋 = 알림 문자 복사</span>
     </div>
-    ${loanTable}${overdueRows}</tbody></table></div>
-  </div>`:''}
-
-  ${near.length>0?`
-  <div class="card mb16">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3 style="font-size:14px;font-weight:700;color:var(--orange);">🟠 반납 임박 (${near.length}명)</h3>
-      <span style="font-size:11px;color:var(--muted);">📋 클릭 시 알림 문자 복사</span>
-    </div>
-    ${loanTable}${nearRows}</tbody></table></div>
-  </div>`:''}
-
-  ${overdue.length===0&&near.length===0?`<div class="card mb16" style="text-align:center;padding:24px;"><span style="font-size:24px;">✅</span><p style="margin-top:8px;color:var(--muted);">초과 및 임박 없음</p></div>`:''}
-
-  ${arPending.length>0?`
-  <div class="card">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--muted);">📝 AR 퀴즈 미완료 (${arPending.length}권)</h3>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>학생</th><th>도서명</th><th>반납기한</th><th>알림</th><th></th></tr></thead>
-      <tbody>${arRows}</tbody>
+      <thead><tr><th>학생</th><th>대여중</th><th>최근 대여일</th><th>가장 빠른 반납기한</th><th>상태</th><th>AR</th><th></th></tr></thead>
+      <tbody>${tableRows}</tbody>
     </table></div>
+  </div>`}
+
+  ${arPendingCount>0?`
+  <div class="card" style="margin-top:14px;">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:4px;color:var(--muted);">📝 AR 퀴즈 미완료 ${arPendingCount}권</h3>
+    <p style="font-size:12px;color:var(--muted);">학생 상세에서 개별 완료 처리 가능합니다</p>
   </div>`:''}
   `);
 }

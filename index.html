@@ -164,7 +164,7 @@ tr:last-child td{border-bottom:none;}
 <body>
 
 <!-- CONFIG SCREEN -->
-<div id="configScreen" class="full-center" style="display:none;">
+<div id="configScreen" class="full-center" style="display:none !important;">
   <div class="auth-card">
     <div class="auth-logo"><div class="icon">🔧</div><h1>Firebase 초기 설정</h1><p>Firebase 콘솔에서 프로젝트 설정 &gt; 앱 추가 &gt; Web 선택 후 값 복사</p></div>
     <div class="fg"><label>API Key</label><input id="c-key" placeholder="AIza..."></div>
@@ -323,10 +323,7 @@ function doSaveConfig(){
   location.reload();
 }
 
-function showConfig(){
-  $('homeScreen').style.display='none';
-  $('configScreen').style.display='flex';
-}
+function showConfig(){ /* disabled */ }
 
 // STATE
 const S={
@@ -1188,8 +1185,18 @@ function toast(msg,type=''){const w=$('toast-wrap'),el=document.createElement('d
 function $(id){return document.getElementById(id);}
 
 // BOOTSTRAP
-if(loadCfg()){initFB();boot();}
-else{$('configScreen').style.display='flex';}
+// Firebase 설정 하드코딩
+fbCfg={
+    apiKey:"AIzaSyBeq7ZzgznJ5kZiNCZyK8ik929F7mAKqNE",
+    authDomain:"altiora-library.firebaseapp.com",
+    databaseURL:"https://altiora-library-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"altiora-library",
+    storageBucket:"altiora-library.firebasestorage.app",
+    messagingSenderId:"162289873475",
+    appId:"1:162289873475:web:edf287896955f083f89af6"
+  };
+initFB();
+boot();
 </script>
 </body>
 </html>

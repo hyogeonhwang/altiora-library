@@ -163,29 +163,10 @@ tr:last-child td{border-bottom:none;}
 </head>
 <body>
 
-<!-- CONFIG SCREEN -->
-<div id="configScreen" class="full-center" style="display:none !important;">
-  <div class="auth-card">
-    <div class="auth-logo"><div class="icon">🔧</div><h1>Firebase 초기 설정</h1><p>Firebase 콘솔에서 프로젝트 설정 &gt; 앱 추가 &gt; Web 선택 후 값 복사</p></div>
-    <div class="fg"><label>API Key</label><input id="c-key" placeholder="AIza..."></div>
-    <div class="fg"><label>Auth Domain</label><input id="c-auth" placeholder="xxx.firebaseapp.com"></div>
-    <div class="fg"><label>Database URL</label><input id="c-db" placeholder="https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app"></div>
-    <div class="fg"><label>Project ID</label><input id="c-pid" placeholder="your-project-id"></div>
-    <div class="fg-row">
-      <div class="fg"><label>Storage Bucket</label><input id="c-sb" placeholder="xxx.appspot.com"></div>
-      <div class="fg"><label>Messaging Sender ID</label><input id="c-ms" placeholder="123456789"></div>
-    </div>
-    <div class="fg"><label>App ID</label><input id="c-aid" placeholder="1:xxx:web:xxx"></div>
-    <div class="info-box">⚠️ Firebase Realtime DB 규칙: 초기 테스트 시 read/write 허용, 운영 시 rules 설정 필수</div>
-    <button class="btn btn-navy btn-full" onclick="doSaveConfig()">💾 저장하고 시작</button>
-  </div>
-</div>
-
 <!-- HOME SCREEN -->
 <div id="homeScreen" style="display:none;flex-direction:column;">
   <div class="home-header">
     <div><h1>📚 도서대여 시스템</h1><p>알티오라 &amp; 팬그램 · 반을 선택해 주세요</p></div>
-    <a href="#" style="color:rgba(255,255,255,.4);font-size:11px;" onclick="showConfig();return false;">⚙ 설정</a>
   </div>
   <div class="home-body">
     <div id="homeClassGrid"></div>

@@ -246,7 +246,7 @@ tr:last-child td{border-bottom:none;}
   <!-- 스캔/ISBN 탭 -->
   <div id="loanTabScan">
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input id="ln-isbn" placeholder="ISBN 13자리 입력 또는 바코드 스캔" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;">
+      <input id="ln-isbn" placeholder="ISBN 13자리 입력 또는 바코드 스캔" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')searchByISBN()">
       <button class="btn btn-secondary" onclick="searchByISBN()">검색</button>
       <button class="btn btn-primary" onclick="openScanner()">📷 스캔</button>
     </div>
@@ -1042,8 +1042,27 @@ function closeLoanModal(){stopScanner();cm('mLoan');}
 async function searchByISBN(){
   const isbn=$('ln-isbn').value.replace(/\D/g,'');if(!isbn){toast('ISBN을 입력해주세요','err');return;}
   toast('검색 중...');
-  try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);const d=await r.json();
-    if(d.items?.length>0)selectBook(d.items[0]);else toast('도서를 찾을 수 없습니다','err');
+  try{
+    // 1차: Google Books API
+    const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const d=await r.json();
+    if(d.items?.length>0){selectBook(d.items[0]);return;}
+
+    // 2차: Open Library API
+    const r2=await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+    const d2=await r2.json();
+    const key=`ISBN:${isbn}`;
+    if(d2[key]){
+      const bk=d2[key];
+      const fakeItem={volumeInfo:{
+        title:bk.title||'제목 없음',
+        authors:(bk.authors||[]).map(a=>a.name),
+        imageLinks:{thumbnail:(bk.cover?.medium||bk.cover?.small||'')},
+        industryIdentifiers:[{type:'ISBN_13',identifier:isbn}]
+      },id:isbn};
+      selectBook(fakeItem);return;
+    }
+    toast('도서를 찾을 수 없습니다. 직접 입력 탭을 이용해주세요','err');
   }catch(e){toast('검색 실패: '+e.message,'err');}
 }
 function switchLoanTab(tab){

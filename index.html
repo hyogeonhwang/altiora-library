@@ -192,7 +192,7 @@ tr:last-child td{border-bottom:none;}
 <div class="overlay" id="mAdminPin"><div class="modal narrow">
   <div class="mh"><h3>🔐 관리자 모드</h3><button class="mc" onclick="cm('mAdminPin')">✕</button></div>
   <div class="fg"><label>관리자 PIN</label>
-    <input class="pin-input" id="pin-input" type="password" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')verifyAdminPin()">
+    <input class="pin-input" id="pin-input" type="password" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')verifyAdminPin()" autocomplete="off">
   </div>
   <div id="pin-err" style="display:none;color:var(--red);font-size:13px;margin-bottom:10px;text-align:center;"></div>
   <div class="mf">
@@ -205,8 +205,8 @@ tr:last-child td{border-bottom:none;}
 <div class="overlay" id="mStudent"><div class="modal">
   <div class="mh"><h3 id="mStudentTitle">학생 추가</h3><button class="mc" onclick="cm('mStudent')">✕</button></div>
   <div class="fg-row">
-    <div class="fg"><label>한국어 이름</label><input id="s-name" placeholder="홍길동"></div>
-    <div class="fg"><label>영어 이름</label><input id="s-ename" placeholder="James"></div>
+    <div class="fg"><label>한국어 이름</label><input id="s-name" placeholder="홍길동" autocomplete="off"></div>
+    <div class="fg"><label>영어 이름</label><input id="s-ename" placeholder="James" autocomplete="off"></div>
   </div>
   <div class="fg" id="s-class-wrap"><label>반</label><select id="s-class"></select></div>
   <div id="s-class-fixed" style="display:none;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:14px;font-weight:600;margin-bottom:14px;"></div>
@@ -221,7 +221,7 @@ tr:last-child td{border-bottom:none;}
       <button type="button" id="cl-sch-a" class="school-btn active" onclick="selectSchool('altiora')">🔵 알티오라</button>
       <button type="button" id="cl-sch-p" class="school-btn" onclick="selectSchool('pangram')">🟣 팬그램</button>
     </div>
-    <input type="hidden" id="cl-school" value="altiora">
+    <input type="hidden" id="cl-school" value="altiora" autocomplete="off">
   </div>
   <div class="fg"><label>반 이름</label>
     <input id="cl-name" list="classNameList" placeholder="반 이름 입력 또는 선택..." autocomplete="off">
@@ -236,7 +236,7 @@ tr:last-child td{border-bottom:none;}
   <div class="mh"><h3>📖 도서 대여</h3><button class="mc" onclick="closeLoanModal()">✕</button></div>
   <div class="fg-row">
     <div class="fg"><label>학생 선택</label><select id="ln-student"></select></div>
-    <div class="fg"><label>대여일</label><input type="date" id="ln-date" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;width:100%;"></div>
+    <div class="fg"><label>대여일</label><input type="date" id="ln-date" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;width:100%;" autocomplete="off"></div>
   </div>
   <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
   <div class="tabs" style="margin-bottom:12px;">
@@ -246,7 +246,7 @@ tr:last-child td{border-bottom:none;}
   <!-- 스캔/ISBN 탭 -->
   <div id="loanTabScan">
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input id="ln-isbn" placeholder="ISBN 13자리 입력 또는 바코드 스캔" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')searchByISBN()">
+      <input id="ln-isbn" placeholder="ISBN 13자리 입력 또는 바코드 스캔" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')searchByISBN()" autocomplete="off">
       <button class="btn btn-secondary" onclick="searchByISBN()">검색</button>
       <button class="btn btn-primary" onclick="openScanner()">📷 스캔</button>
     </div>
@@ -254,15 +254,30 @@ tr:last-child td{border-bottom:none;}
   </div>
   <!-- 직접 입력 탭 -->
   <div id="loanTabManual" style="display:none;">
-    <div class="fg"><label>도서명 *</label><input id="mn-title" placeholder="책 제목 입력"></div>
+    <div class="fg"><label>도서명 *</label><input id="mn-title" placeholder="책 제목 입력" autocomplete="off"></div>
     <div class="fg-row">
-      <div class="fg"><label>저자</label><input id="mn-author" placeholder="저자명"></div>
-      <div class="fg"><label>ISBN (선택)</label><input id="mn-isbn" placeholder="ISBN"></div>
+      <div class="fg"><label>저자</label><input id="mn-author" placeholder="저자명" autocomplete="off"></div>
+      <div class="fg"><label>ISBN (선택)</label><input id="mn-isbn" placeholder="ISBN" autocomplete="off"></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="confirmManual()">이 도서로 선택</button>
   </div>
   <div id="ln-selected" style="display:none;background:var(--bg);border-radius:8px;padding:12px;margin:10px 0;"><div class="book-preview" id="ln-bookInfo"></div></div>
-  <div class="mf"><button class="btn btn-secondary" onclick="closeLoanModal()">취소</button><button class="btn btn-primary" id="ln-confirm" onclick="confirmLoan()" disabled>대여 확정</button></div>
+  <div class="mf"><button class="btn btn-primary" id="ln-confirm" onclick="confirmLoan()" disabled>대여 확정</button></div>
+</div></div>
+
+<!-- RETURN MODAL -->
+<div class="overlay" id="mReturn"><div class="modal">
+  <div class="mh"><h3>📥 반납 처리</h3><button class="mc" onclick="cm('mReturn')">✕</button></div>
+  <input type="hidden" id="ret-cid">
+  <div class="fg"><label>책 바코드 스캔 또는 ISBN 입력</label>
+    <div style="display:flex;gap:8px;">
+      <input id="ret-isbn" placeholder="ISBN 13자리" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;" autocomplete="off"
+        onkeydown="if(event.key==='Enter')searchReturnByISBN()">
+      <button class="btn btn-primary" onclick="searchReturnByISBN()">조회</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">바코드 리더기로 스캔하면 자동 조회됩니다</div>
+  </div>
+  <div id="ret-result"></div>
 </div></div>
 
 <!-- EXCEL MODAL -->
@@ -270,7 +285,7 @@ tr:last-child td{border-bottom:none;}
   <div class="mh"><h3>📊 학생 일괄 등록</h3><button class="mc" onclick="cm('mExcel')">✕</button></div>
   <div class="info-box"><strong>엑셀 형식 (1행: 헤더, 2행부터 데이터)</strong><br>A: 반이름 | B: 한국이름 | C: 영어이름 | D: 학년</div>
   <div style="margin-bottom:10px;"><button class="btn btn-secondary btn-sm" onclick="downloadTemplate()">📥 양식 다운로드</button></div>
-  <div class="fg"><label>엑셀 파일 (.xlsx, .xls)</label><input type="file" id="xl-file" accept=".xlsx,.xls" onchange="previewExcel()"></div>
+  <div class="fg"><label>엑셀 파일 (.xlsx, .xls)</label><input type="file" id="xl-file" accept=".xlsx,.xls" onchange="previewExcel()" autocomplete="off"></div>
   <div id="xl-preview" style="display:none;max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>
   <div class="mf"><button class="btn btn-secondary" onclick="cm('mExcel')">취소</button><button class="btn btn-primary" id="xl-upload" onclick="uploadExcel()" disabled>등록</button></div>
 </div></div>
@@ -278,10 +293,10 @@ tr:last-child td{border-bottom:none;}
 <!-- SETTINGS MODAL -->
 <div class="overlay" id="mSettings"><div class="modal">
   <div class="mh"><h3>⚙️ 시스템 설정</h3><button class="mc" onclick="cm('mSettings')">✕</button></div>
-  <div class="fg"><label>학생 1인당 최대 대여 권수</label><input type="number" id="set-max" min="1" max="20"></div>
-  <div class="fg"><label>기본 대여 기간 (일)</label><input type="number" id="set-days" min="1" max="90"></div>
-  <div class="fg"><label>반납 임박 알림 기준 (반납 N일 전)</label><input type="number" id="set-warn" min="1" max="14"></div>
-  <div class="fg"><label>관리자 PIN 변경 (빈칸이면 유지)</label><input type="password" id="set-pin" placeholder="새 PIN 입력"></div>
+  <div class="fg"><label>학생 1인당 최대 대여 권수</label><input type="number" id="set-max" min="1" max="20" autocomplete="off"></div>
+  <div class="fg"><label>기본 대여 기간 (일)</label><input type="number" id="set-days" min="1" max="90" autocomplete="off"></div>
+  <div class="fg"><label>반납 임박 알림 기준 (반납 N일 전)</label><input type="number" id="set-warn" min="1" max="14" autocomplete="off"></div>
+  <div class="fg"><label>관리자 PIN 변경 (빈칸이면 유지)</label><input type="password" id="set-pin" placeholder="새 PIN 입력" autocomplete="off"></div>
   <div class="mf"><button class="btn btn-secondary" onclick="cm('mSettings')">취소</button><button class="btn btn-primary" onclick="saveSettings()">저장</button></div>
 </div></div>
 
@@ -451,8 +466,7 @@ function renderSidebar(){
     const cls=S.classes[S.uinfo.classId]||{};
     html=`<div class="sb-section">${cls.name||'내 반'}</div>
     <div class="sb-item" data-v="teacherDash" onclick="nav('teacherDash')"><span class="ico">📊</span>대시보드</div>
-    <div class="sb-item" data-v="classDetail" onclick="nav('classDetail')"><span class="ico">👦</span>학생 목록</div>
-    <div class="sb-item" data-v="loanList" onclick="nav('loanList')"><span class="ico">📖</span>대여 현황</div>`;
+    <div class="sb-item" data-v="classDetail" onclick="nav('classDetail')"><span class="ico">👦</span>학생 목록</div>`;
   }
   $('sbNav').innerHTML=html;
 }
@@ -464,7 +478,7 @@ function nav(v,upd=true){
   if(upd) setActive(v);
   const fn={overview:vOverview,classes:vClasses,classDetail:()=>vClassDetail(S.classId),
     studentDetail:()=>vStudentDetail(S.studentId),students:vStudents,
-    loans:vLoans,loanList:vLoanList,teacherDash:vTeacherDash}[v];
+    loans:vLoans,teacherDash:vTeacherDash}[v];
   if(fn) fn();
 }
 
@@ -661,7 +675,7 @@ function vStudentDetail(sid){
               ${st==='overdue'?`<span class="badge b-red" style="margin-left:4px;">+${Math.abs(d)}일</span>`:
                 st==='near'?`<span class="badge b-orange" style="margin-left:4px;">${d}일 남음</span>`:''}
             </div>
-            <label class="cb" style="margin-top:6px;"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"> AR 퀴즈 완료</label>
+            <label class="cb" style="margin-top:6px;"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)" autocomplete="off"> AR 퀴즈 완료</label>
           </div>
           <div class="li-actions"><button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button></div>
         </div>`;}).join('')}
@@ -673,7 +687,7 @@ function vStudentDetail(sid){
       <thead><tr><th>도서명</th><th>대여일</th><th>반납일</th><th>AR 퀴즈</th></tr></thead>
       <tbody>${rl.map(([lid,l])=>`<tr>
         <td>${l.bookTitle||l.isbn}</td><td>${l.loanDate}</td><td>${l.returnDate}</td>
-        <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"> ${l.arQuizDone?'✅':''}</label></td>
+        <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)" autocomplete="off"> ${l.arQuizDone?'✅':''}</label></td>
       </tr>`).join('')}</tbody></table></div>`}
   </div>`);
 }
@@ -703,7 +717,7 @@ function vStudents(){
       <option value="">전체 반</option>
       ${classOpts.map(([id,c])=>`<option value="${id}">[${c.school==='altiora'?'알':'팬'}] ${c.name}</option>`).join('')}
     </select>
-    <input id="as-search" placeholder="이름 검색..." oninput="filterAS()" style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:130px;">
+    <input id="as-search" placeholder="이름 검색..." oninput="filterAS()" style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:130px;" autocomplete="off">
   </div>
   <div class="card" style="padding:0;"><div class="tbl-wrap"><table id="as-table">
     <thead><tr><th>이름</th><th>영어이름</th><th>학년</th><th>반</th><th>학교</th><th>대여</th><th></th></tr></thead>
@@ -793,7 +807,7 @@ function renderLoanTable(f){
         <td>${cl.name||'-'}</td>
         <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.bookTitle||l.isbn||'-'}</td>
         <td>${l.loanDate}</td><td>${l.dueDate}</td><td>${loanBadge(l)}</td>
-        <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"></label></td>
+        <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)" autocomplete="off"></label></td>
         <td>${!l.returnDate?`<button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button>`:''}</td>
       </tr>`;}).join('')}
     </tbody></table></div></div>`;
@@ -878,7 +892,10 @@ function vTeacherDash(){
   put(`
   <div class="ph">
     <div><h2>${cls.name} 대시보드</h2><p>오늘 ${today()}</p></div>
-    <button class="btn btn-primary" onclick="openLoanModal('${cid}')">📖 도서 대여</button>
+    <div class="ph-actions">
+      <button class="btn btn-secondary" onclick="openReturnModal('${cid}')">📥 반납 처리</button>
+      <button class="btn btn-primary" onclick="openLoanModal('${cid}')">📖 도서 대여</button>
+    </div>
   </div>
   <div class="stats" style="margin-bottom:16px;">
     <div class="stat" style="cursor:pointer;" onclick="filterDash('all')">
@@ -936,27 +953,46 @@ function filterDash(f){
   if(empty) empty.style.display=vis===0?'block':'none';
 }
 
-function vLoanList(){
-  const cid=S.uinfo.classId;
-  const loans=Object.entries(S.loans).filter(([,l])=>l.classId===cid&&!l.returnDate)
-    .sort((a,b)=>a[1].dueDate.localeCompare(b[1].dueDate));
-  put(`
-  <div class="ph"><div><h2>대여 현황</h2><p>전체 대여 중 ${loans.length}권</p></div>
-    <button class="btn btn-primary" onclick="openLoanModal('${cid}')">📖 도서 대여</button></div>
-  ${loans.length===0?`<div class="empty"><div class="ei">📖</div><p>대여 중인 도서가 없습니다</p></div>`:
-  `<div class="card" style="padding:0;"><div class="tbl-wrap"><table>
-    <thead><tr><th>학생</th><th>도서명</th><th>대여일</th><th>반납기한</th><th>상태</th><th>AR</th><th></th></tr></thead>
-    <tbody>${loans.map(([lid,l])=>{
-      const st=S.students[l.studentId]||{};
-      return `<tr>
-        <td><strong class="tr-link" onclick="goStudent('${l.studentId}')" style="color:var(--primary);cursor:pointer;">${st.name||'-'}</strong></td>
-        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.bookTitle||l.isbn}</td>
-        <td>${l.loanDate}</td><td>${l.dueDate}</td>
-        <td>${loanBadge(l)}</td>
-        <td><label class="cb"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)"></label></td>
-        <td><button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button></td>
-      </tr>`;}).join('')}
-    </tbody></table></div></div>`}`);
+function openReturnModal(cid){
+  $('ret-isbn').value='';
+  $('ret-result').innerHTML='';
+  $('ret-cid').value=cid||S.uinfo.classId||'';
+  om('mReturn');
+  setTimeout(()=>$('ret-isbn').focus(),100);
+}
+
+async function searchReturnByISBN(){
+  const isbn=$('ret-isbn').value.replace(/\D/g,'');
+  if(!isbn){toast('ISBN을 입력해주세요','err');return;}
+  const cid=$('ret-cid').value;
+  // 해당 반에서 이 ISBN으로 대여중인 기록 찾기
+  const found=Object.entries(S.loans).filter(([,l])=>
+    l.classId===cid && !l.returnDate &&
+    (l.isbn===isbn||l.isbn===isbn.replace(/^978/,''))
+  );
+  const el=$('ret-result');
+  if(found.length===0){
+    el.innerHTML=`<div style="padding:12px;color:var(--red);text-align:center;">해당 도서의 대여 기록을 찾을 수 없습니다</div>`;
+    return;
+  }
+  el.innerHTML=found.map(([lid,l])=>{
+    const st=S.students[l.studentId]||{};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px;margin-bottom:8px;">
+      <div>
+        <div style="font-weight:700;font-size:14px;">${st.name||'-'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${l.bookTitle||isbn} · 반납기한 ${l.dueDate}</div>
+      </div>
+      <button class="btn btn-success" onclick="doReturn('${lid}')">반납 처리</button>
+    </div>`;
+  }).join('');
+}
+
+async function doReturn(lid){
+  await _db.ref('/loans/'+lid).update({returnDate:today()});
+  toast('반납 처리 완료 ✅','ok');
+  $('ret-isbn').value='';
+  $('ret-result').innerHTML='';
+  $('ret-isbn').focus();
 }
 
 // MODAL

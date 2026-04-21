@@ -590,7 +590,7 @@ function vClassDetail(classId){
       <button class="btn btn-primary" onclick="openLoanModal('${classId}')">📖 대여</button>
     </div>
   </div>
-  <div class="search-row"><input id="sg-search" placeholder="이름 검색..." oninput="filterSG()"></div>
+  <div class="search-row"><input id="sg-search" placeholder="이름 검색..." oninput="filterSG()" autocomplete="off"></div>
   <div class="sg" id="studentGrid">
   ${classStudents.length===0?`<div class="empty" style="grid-column:1/-1;"><div class="ei">👦</div><p>등록된 학생이 없습니다</p></div>`:
     classStudents.map(([sid,s])=>{
@@ -862,7 +862,7 @@ function vTeacherDash(){
   const arPendingCount=allLoans.filter(([,l])=>!l.arQuizDone).length;
 
   const tableRows=studentRows.map(r=>`
-    <tr>
+    <tr data-status="${r.hasOverdue?'overdue':r.hasNear?'near':'active'}">
       <td><strong class="tr-link" onclick="goStudent('${r.sid}')" style="color:var(--primary);cursor:pointer;">${r.st.name||'-'}</strong></td>
       <td><span class="badge b-blue">${r.count}권</span></td>
       <td>${r.latestLoan}</td>
@@ -880,23 +880,28 @@ function vTeacherDash(){
     <div><h2>${cls.name} 대시보드</h2><p>오늘 ${today()}</p></div>
     <button class="btn btn-primary" onclick="openLoanModal('${cid}')">📖 도서 대여</button>
   </div>
-  <div class="stats" style="margin-bottom:20px;">
-    <div class="stat"><div class="stat-val">${Object.keys(byStudent).length}</div><div class="stat-lbl">대여 중 학생</div></div>
-    <div class="stat"><div class="stat-val">${allLoans.length}</div><div class="stat-lbl">대여 중 권수</div></div>
-    <div class="stat red"><div class="stat-val">${overdueCount}</div><div class="stat-lbl">기한 초과</div></div>
-    <div class="stat orange"><div class="stat-val">${nearCount}</div><div class="stat-lbl">반납 임박</div></div>
+  <div class="stats" style="margin-bottom:16px;">
+    <div class="stat" style="cursor:pointer;" onclick="filterDash('all')">
+      <div class="stat-val">${Object.keys(byStudent).length}</div><div class="stat-lbl">전체 학생</div></div>
+    <div class="stat" style="cursor:pointer;" onclick="filterDash('active')">
+      <div class="stat-val">${allLoans.length}</div><div class="stat-lbl">대여 중 권수</div></div>
+    <div class="stat red" style="cursor:pointer;" onclick="filterDash('overdue')">
+      <div class="stat-val">${overdueCount}</div><div class="stat-lbl">기한 초과</div></div>
+    <div class="stat orange" style="cursor:pointer;" onclick="filterDash('near')">
+      <div class="stat-val">${nearCount}</div><div class="stat-lbl">반납 임박</div></div>
   </div>
 
   ${studentRows.length===0?`<div class="card" style="text-align:center;padding:32px;"><span style="font-size:32px;">📚</span><p style="margin-top:10px;color:var(--muted);">현재 대여 중인 학생이 없습니다</p></div>`:`
   <div class="card" style="padding:0;">
-    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="font-size:14px;font-weight:700;">대여 현황 (${studentRows.length}명)</h3>
-      <span style="font-size:11px;color:var(--muted);">📋 = 알림 문자 복사</span>
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:14px;font-weight:700;" id="dash-title">대여 현황 (${studentRows.length}명)</h3>
+      <span style="font-size:11px;color:var(--muted);">📋 = 문자복사 · 카드 클릭으로 필터</span>
     </div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>학생</th><th>대여중</th><th>최근 대여일</th><th>가장 빠른 반납기한</th><th>상태</th><th>AR</th><th></th></tr></thead>
-      <tbody>${tableRows}</tbody>
+      <tbody id="dash-tbody">${tableRows}</tbody>
     </table></div>
+    <div id="dash-empty" style="display:none;text-align:center;padding:24px;color:var(--muted);">해당 상태의 학생이 없습니다</div>
   </div>`}
 
   ${arPendingCount>0?`
@@ -905,6 +910,30 @@ function vTeacherDash(){
     <p style="font-size:12px;color:var(--muted);">학생 상세에서 개별 완료 처리 가능합니다</p>
   </div>`:''}
   `);
+}
+
+function filterDash(f){
+  // 탭 활성화
+  ['all','overdue','near','active'].forEach(t=>{
+    const el=$('df-'+t); if(el) el.classList.toggle('active',t===f);
+  });
+  const tbody=$('dash-tbody'); if(!tbody) return;
+  let vis=0;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const status=tr.dataset.status||'';
+    let show=false;
+    if(f==='all') show=true;
+    else if(f==='overdue') show=status==='overdue';
+    else if(f==='near') show=status==='near';
+    else if(f==='active') show=status==='active';
+    tr.style.display=show?'':'none';
+    if(show) vis++;
+  });
+  const title=$('dash-title');
+  const empty=$('dash-empty');
+  const labels={all:'전체',overdue:'기한 초과',near:'반납 임박',active:'대여중'};
+  if(title) title.textContent=`${labels[f]} (${vis}명)`;
+  if(empty) empty.style.display=vis===0?'block':'none';
 }
 
 function vLoanList(){

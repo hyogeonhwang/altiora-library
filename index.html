@@ -512,7 +512,7 @@ function schoolBadge(school){
 }
 
 function activeLoansOf(sid){return Object.entries(S.loans).filter(([,l])=>l.studentId===sid&&!l.returnDate);}
-function put(html){$('mainArea').innerHTML=html;}
+function put(html){$('mainArea').innerHTML=html;setTimeout(()=>{const el=$('sg-search');if(el){el.value='';el.dataset.typed='0';}},50);}
 
 // VIEW: OVERVIEW
 function vOverview(){
@@ -604,7 +604,7 @@ function vClassDetail(classId){
       <button class="btn btn-primary" onclick="openLoanModal('${classId}')">📖 대여</button>
     </div>
   </div>
-  <div class="search-row"><input id="sg-search" placeholder="이름 검색..." oninput="filterSG()" autocomplete="off"></div>
+  <div class="search-row"><input id="sg-search" type="search" placeholder="이름 검색..." oninput="filterSG()" autocomplete="off" name="search_xq7k2_${Date.now()}" onfocus="this.removeAttribute('readonly')" readonly></div>
   <div class="sg" id="studentGrid">
   ${classStudents.length===0?`<div class="empty" style="grid-column:1/-1;"><div class="ei">👦</div><p>등록된 학생이 없습니다</p></div>`:
     classStudents.map(([sid,s])=>{
@@ -625,7 +625,13 @@ function vClassDetail(classId){
   </div>`);
 }
 
+function clearSearch(){
+  const el=$('sg-search');
+  if(el&&el.value&&!el.dataset.typed){el.value='';el.dataset.typed='0';}
+}
+
 function filterSG(){
+  if($('sg-search')) $('sg-search').dataset.typed='1';
   const q=($('sg-search')||{value:''}).value.toLowerCase();
   document.querySelectorAll('.sc').forEach(el=>{
     const t=el.querySelector('.sc-name')?.textContent.toLowerCase()||'';

@@ -672,7 +672,9 @@ function vStudentDetail(sid){
       al.map(([lid,l])=>{
         const st=loanStatus(l),d=daysDiff(today(),l.dueDate);
         return `<div class="li">
-          ${l.thumbnail?`<img src="${l.thumbnail}" class="li-thumb" onerror="this.style.display='none'">`:
+          ${l.thumbnail||l.isbn?`<img src="${l.thumbnail||('https://covers.openlibrary.org/b/isbn/'+l.isbn+'-M.jpg')}" class="li-thumb"
+            onerror="this.src='https://covers.openlibrary.org/b/isbn/${l.isbn}-M.jpg';this.onerror=function(){this.style.display='none';this.nextSibling.style.display='flex';}">
+            <div class="li-thumb-ph" style="display:none;">📚</div>`:
             '<div class="li-thumb-ph">📚</div>'}
           <div class="li-info">
             <div class="li-title">${l.bookTitle||l.isbn}</div>
@@ -683,7 +685,7 @@ function vStudentDetail(sid){
             </div>
             <label class="cb" style="margin-top:6px;"><input type="checkbox" ${l.arQuizDone?'checked':''} onchange="toggleAR('${lid}',this.checked)" autocomplete="off"> AR 퀴즈 완료</label>
           </div>
-          <div class="li-actions"><button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button></div>
+          <div class="li-actions" style="display:flex;flex-direction:column;gap:4px;"><button class="btn btn-success btn-sm" onclick="returnBook('${lid}')">반납</button><button class="btn btn-danger btn-sm" onclick="cancelLoan('${lid}')">취소</button></div>
         </div>`;}).join('')}
   </div>
   <div class="card">
@@ -1193,6 +1195,10 @@ async function confirmLoan(){
 async function returnBook(lid){
   if(!confirm('반납 처리하시겠습니까?')) return;
   await _db.ref(`/loans/${lid}`).update({returnDate:today()});toast('반납 처리 완료','ok');
+}
+async function cancelLoan(lid){
+  if(!confirm('대여를 취소하시겠습니까?\n취소하면 대여 기록이 완전히 삭제됩니다.')) return;
+  await _db.ref(`/loans/${lid}`).remove();toast('대여 취소 완료');
 }
 async function toggleAR(lid,checked){
   await _db.ref(`/loans/${lid}`).update({arQuizDone:checked});toast(checked?'AR 퀴즈 완료 ✅':'AR 퀴즈 해제');
